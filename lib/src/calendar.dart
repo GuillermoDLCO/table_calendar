@@ -161,6 +161,12 @@ class TableCalendar extends StatefulWidget {
   /// Set of Builders for `TableCalendar` to work with.
   final CalendarBuilders builders;
 
+  /// Set low limit of pages week/2week/month
+  final int lowLimitPage;
+
+  /// Set top limit of pages week/2week/month
+  final int topLimitPage;
+
   TableCalendar({
     Key key,
     @required this.calendarController,
@@ -200,6 +206,8 @@ class TableCalendar extends StatefulWidget {
     this.daysOfWeekStyle = const DaysOfWeekStyle(),
     this.headerStyle = const HeaderStyle(),
     this.builders = const CalendarBuilders(),
+    this.lowLimitPage,
+    this.topLimitPage,
   })  : assert(calendarController != null),
         assert(availableCalendarFormats.keys.contains(initialCalendarFormat)),
         assert(availableCalendarFormats.length <= CalendarFormat.values.length),
@@ -207,6 +215,7 @@ class TableCalendar extends StatefulWidget {
         assert(weekendDays.isNotEmpty
             ? weekendDays.every((day) => day >= DateTime.monday && day <= DateTime.sunday)
             : true),
+        assert((lowLimitPage != null && topLimitPage != null  && lowLimitPage <= topLimitPage) || lowLimitPage == null || topLimitPage == null),
         super(key: key);
 
   @override
@@ -261,15 +270,19 @@ class _TableCalendarState extends State<TableCalendar> with SingleTickerProvider
   }
 
   void _selectPrevious() {
-    setState(() {
-      widget.calendarController._selectPrevious();
-    });
+    if((widget.lowLimitPage != null && widget.lowLimitPage < widget.calendarController._pageId) || widget.lowLimitPage == null){
+      setState(() {
+        widget.calendarController._selectPrevious();
+      });
+    }
   }
 
   void _selectNext() {
-    setState(() {
-      widget.calendarController._selectNext();
-    });
+    if((widget.topLimitPage != null && widget.topLimitPage > widget.calendarController._pageId) || widget.topLimitPage == null){
+      setState(() {
+        widget.calendarController._selectNext();
+      });
+    }
   }
 
   void _selectDay(DateTime day) {
@@ -511,7 +524,8 @@ class _TableCalendarState extends State<TableCalendar> with SingleTickerProvider
         key: ValueKey(widget.calendarController._pageId),
         resizeDuration: null,
         onDismissed: _onHorizontalSwipe,
-        direction: DismissDirection.horizontal,
+        direction:  widget.lowLimitPage != null && widget.lowLimitPage == widget.calendarController._pageId ?  DismissDirection.endToStart 
+                    : widget.topLimitPage != null && widget.topLimitPage == widget.calendarController._pageId ? DismissDirection.startToEnd : DismissDirection.horizontal,
         child: child,
       ),
     );
